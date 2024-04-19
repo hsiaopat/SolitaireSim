@@ -75,9 +75,9 @@ class Solitaire:
                 self.tableau[index].append(card_obj)
                 index += 1
 
-            elif index == 7:
-                index = count
-                count += 1
+                if index == 7:
+                    index = count
+                    count += 1
 
             else:
                 pile.append(card_obj)
