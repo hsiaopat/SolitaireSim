@@ -1,4 +1,3 @@
-from card import Card 
 import os
 
 class Solitaire:
@@ -13,10 +12,9 @@ class Solitaire:
                 return f"{self.rank} of {self.suit}"
             else:
                 return "Hidden Card"
-            
         def visible_str(self):
-            return f"{self.rank} of {self.suit}"
-
+                return f"{self.rank} of {self.suit}"
+        
         def flip(self):
             self.visible = not self.visible
 
