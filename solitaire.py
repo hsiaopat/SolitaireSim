@@ -24,49 +24,120 @@ class Solitaire:
 
         # Look for a file with the desired format (containing numbers from 01 to 51)
         for file_name in files_in_directory:
-            if file_name.endswith(".txt") and all(char.isdigit() for char in file_name[:-4]):
+            if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
                 self.card_codes = self.generate_card_codes(file_name)
-                break
+                print("File Name: ")
+                print(file_name)
+                break  
         else:
             raise FileNotFoundError("No suitable file found in the current directory.")
 
 
         self.card_codes = self.generate_card_codes(file_name)
         self.mapping = {
-            "00": "2H", "01": "3H", "02": "4H", "03": "5H",
-            "04": "6H", "05": "7H", "06": "8H", "07": "9H",
-            "08": "10H", "09": "JH", "10": "QH", "11": "KH",
-            "12": "AH", "13": "2D", "14": "3D", "15": "4D",
-            "16": "5D", "17": "6D", "18": "7D", "19": "8D",
-            "20": "9D", "21": "10D", "22": "JD", "23": "QD",
-            "24": "KD", "25": "AD", "26": "2S", "27": "3S",
-            "28": "4S", "29": "5S", "30": "6S", "31": "7S",
-            "32": "8S", "33": "9S", "34": "10S", "35": "JS",
-            "36": "QS", "37": "KS", "38": "AS", "39": "2C",
-            "40": "3C", "41": "4C", "42": "5C", "43": "6C",
-            "44": "7C", "45": "8C", "46": "9C", "47": "10C",
-            "48": "JC", "49": "QC", "50": "KC", "51": "AC"
+            0:"C", 1: "D", 2: "H", 3: "S" 
         }
+
 
         self.tableau = [[] for _ in range(7)]
         self.setup_tableau()
+        self.pointer = len(self.hand)-1
+    
+        
 
     def generate_card_codes(self, file_name):
-        card_codes = [file_name[i:i+2] for i in range(0, len(file_name), 2) if file_name[i:i+2].isdigit()]
+        card_codes = []
+        i = len(file_name) - 1
+        while i > 0:
+            # Check if the current two characters form a valid two-digit number
+            if file_name[i-1:i+1].isdigit():
+                card_codes.append(file_name[i-1:i+1])
+                i -= 2  # Move two characters back for the next two-digit number
+            else:
+                i -= 1  # Move one character back if it's not a valid two-digit number
         return card_codes
+    
+    def check_validity(self, source, target):
+        #check validity of move based on tableau
+        source = 1
+        target = 1
+
+        if source != target and (source <= 11 and source >= 8 and target <= 11 and target >= 8):
+            print("Not valid")
+            return False
+        if source == target:
+            print("Error: You selected the same location")
+            return False
+        
+        if source < 0 or source > 11 or target < 0 or target > 11:
+            print("Error: Not valid location to move")
+            return False
+        
+        return
+    
+    def move(self, source, target):
+        # 0 = hand
+        # 1 = col 1 
+        # 2 = col 2
+        # 3 = col 3 
+        # 4 = col 4 
+        # 5 = col 5 
+        # 6 = col 6 
+        # 7 = col 7 
+        # 8 = clubs pile
+        # 9 = diamonds pile
+        # 10 = hearts pile
+        # 11 = spades pile
+        #check for error
+        
+
+        # Move card to desired location
+        if source == 0:  # If the source is the hand
+            card = self.hand.pop(self.pointer)
+            if target >= 1 and target <= 7:
+                self.tableau[target - 1].append(card)
+                # Flip the card behind it if any
+                if self.pointer > 0:
+                    self.hand[self.pointer - 1].flip()
+            # If it was in the hand, move the pointer
+            self.pointer -= 1
+            
+            # Update the hand if necessary
+            if self.pointer < 0:
+                self.pointer = 0
+
+        # Else, flip card behind it over
+        elif source <= 11 and source >= 8:
+            card = self.piles[source].pop()
+            self.tableau[target-1].append(card)
+        elif target <= 11 and target >= 8:
+            card = self.tableau[source-1].pop()
+            self.piles[target].append(card)
+        else:
+            card = self.tableau[source-1].pop()
+            self.tableau[target-1].append(card)
+
+    
+    def hitHand(self):
+        self.pointer -= 3
+        if self.pointer == 0:
+            self.pointer = len(self.hand) - 3
+        elif self.pointer < 0:
+            self.pointer = 0
 
     def setup_tableau(self):
-        pile = []
+        hand = []
         pileH = []
         pileD = []
         pileS = []
         pileC = []
+        piles = {}
         index = 0
         count = 1
         for code in self.card_codes:
-            card = self.mapping[code]
-            rank = card[:-1]
-            suit = card[-1]
+            rank = int(code) // 4 + 1
+            suit = int(code) % 4
+            suit = self.mapping[suit]
             visible = False  # All cards are initially visible
             card_obj = self.Card(rank, suit, visible)
 
@@ -80,40 +151,44 @@ class Solitaire:
                     count += 1
 
             else:
-                pile.append(card_obj)
+                hand.append(card_obj)
         
         for i in range(len(self.tableau)):
             self.tableau[i][-1].visible = True
             
-        pile[-1].visible = True
+        hand[-1].visible = True
 
-        self.pile = pile
-        self.pileH = pileH
-        self.pileD = pileD 
-        self.pileS = pileS 
-        self.pileC = pileC 
+        self.hand = hand
+        self.piles = piles
+        self.piles[8] = pileC 
+        self.piles[9] = pileD 
+        self.piles[10] = pileH
+        self.piles[11] = pileS 
 
     def play(self):
         print("Welcome to Solitaire!")
+        print()
+        print("Directions: To move a card from two locations, ")
+
         print("Tableau:")
         for pile in self.tableau:
             print([str(card) for card in pile])
 
 
         print("\nPile:")
-        print([str(card) for card in self.pile])
-
-        print("\nPile of Hearts:")
-        print([str(card) for card in self.pileH])
-
-        print("\nPile of Diamonds:")
-        print([str(card) for card in self.pileD])
-
-        print("\nPile of Spades:")
-        print([str(card) for card in self.pileS])
+        print([str(card) for card in self.hand])
 
         print("\nPile of Clubs:")
-        print([str(card) for card in self.pileC])
+        print([str(card) for card in self.piles[8]])
+
+        print("\nPile of Diamonds:")
+        print([str(card) for card in self.piles[9]])
+
+        print("\nPile of Hearts:")
+        print([str(card) for card in self.piles[10]])
+
+        print("\nPile of Spades:")
+        print([str(card) for card in self.piles[11]])
        
         print()
         print("Hacker's Tableau:")
@@ -121,22 +196,28 @@ class Solitaire:
             print([card.visible_str() for card in pile])
 
         print("\nHacker's Pile:")
-        print([card.visible_str() for card in self.pile])
-
-        print("\nHacker's Pile of Hearts:")
-        print([card.visible_str() for card in self.pileH])
-
-        print("\nHacker's Pile of Diamonds:")
-        print([card.visible_str() for card in self.pileD])
-
-        print("\nHacker's Pile of Spades:")
-        print([card.visible_str() for card in self.pileS])
+        print([card.visible_str() for card in self.hand])
 
         print("\nHacker's Pile of Clubs:")
-        print([card.visible_str() for card in self.pileC])
+        print([card.visible_str() for card in self.piles[8]])
+
+        print("\nHacker's Pile of Diamonds:")
+        print([card.visible_str() for card in self.piles[9]])
+
+        print("\nHacker's Pile of Hearts:")
+        print([card.visible_str() for card in self.piles[10]])
+
+        print("\nHacker's Pile of Spades:")
+        print([card.visible_str() for card in self.piles[11]])
 
         
+    def displayBoard(self):
+        print("Hacker's Tableau:")
+        for pile in self.tableau:
+            print([card.visible_str() for card in pile])
 
 # Example usage
 solitaire = Solitaire()
+solitaire.play()
+solitaire.move(7,8)
 solitaire.play()
