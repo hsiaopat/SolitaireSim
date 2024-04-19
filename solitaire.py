@@ -13,6 +13,9 @@ class Solitaire:
                 return f"{self.rank} of {self.suit}"
             else:
                 return "Hidden Card"
+            
+        def visible_str(self):
+            return f"{self.rank} of {self.suit}"
 
         def flip(self):
             self.visible = not self.visible
@@ -66,7 +69,7 @@ class Solitaire:
             card = self.mapping[code]
             rank = card[:-1]
             suit = card[-1]
-            visible = True  # All cards are initially visible
+            visible = False  # All cards are initially visible
             card_obj = self.Card(rank, suit, visible)
 
             # Add cards to tableau rows with increasing counts
@@ -80,7 +83,11 @@ class Solitaire:
 
             else:
                 pile.append(card_obj)
+        
+        for i in range(len(self.tableau)):
+            self.tableau[i][-1].visible = True
             
+        pile[-1].visible = True
 
         self.pile = pile
         self.pileH = pileH
@@ -93,6 +100,7 @@ class Solitaire:
         print("Tableau:")
         for pile in self.tableau:
             print([str(card) for card in pile])
+
 
         print("\nPile:")
         print([str(card) for card in self.pile])
@@ -109,7 +117,27 @@ class Solitaire:
         print("\nPile of Clubs:")
         print([str(card) for card in self.pileC])
        
+        print()
+        print("Hacker's Tableau:")
+        for pile in self.tableau:
+            print([card.visible_str() for card in pile])
 
+        print("\nHacker's Pile:")
+        print([card.visible_str() for card in self.pile])
+
+        print("\nHacker's Pile of Hearts:")
+        print([card.visible_str() for card in self.pileH])
+
+        print("\nHacker's Pile of Diamonds:")
+        print([card.visible_str() for card in self.pileD])
+
+        print("\nHacker's Pile of Spades:")
+        print([card.visible_str() for card in self.pileS])
+
+        print("\nHacker's Pile of Clubs:")
+        print([card.visible_str() for card in self.pileC])
+
+        
 
 # Example usage
 solitaire = Solitaire()
