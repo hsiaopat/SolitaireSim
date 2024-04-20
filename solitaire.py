@@ -2,9 +2,10 @@ import os
 
 class Solitaire:
     class Card:
-        def __init__(self, rank, suit, visible=False):
+        def __init__(self, rank, suit, color, visible=False):
             self.rank = rank
             self.suit = suit
+            self.color = color
             self.visible = visible
 
         def __str__(self):
@@ -58,13 +59,7 @@ class Solitaire:
         return card_codes
     
     def check_validity(self, source, target):
-        #check validity of move based on tableau
-        source = 1
-        target = 1
-
-        if source != target and (source <= 11 and source >= 8 and target <= 11 and target >= 8):
-            print("Not valid")
-            return False
+        # Check if the move is valid based on the tableau
         if source == target:
             print("Error: You selected the same location")
             return False
@@ -73,7 +68,62 @@ class Solitaire:
             print("Error: Not valid location to move")
             return False
         
-        return
+        # If the target is one of the piles
+        if target >= 8 and target <= 11:
+            target_suit = self.mapping[target - 8]  # Get the suit of the target pile
+            if source <= 7:  # If moving from tableau to pile
+                if self.tableau[source - 1]:  # Check if tableau source pile is not empty
+                    card_suit = self.tableau[source - 1][-1].suit  # Get the suit of the card being moved
+                    if card_suit == target_suit:  # Check if suits match
+                        return True
+                    else:
+                        print("Error: Card suit does not match pile suit")
+                        return False
+                else:
+                    print("Error: Source tableau pile is empty")
+                    return False
+            else:  # If moving from one pile to another pile
+                return True  # Pile to pile move is always valid
+        else:  # If moving to the tableau
+            if source <= 7:  # If moving from tableau to tableau
+                if self.tableau[source - 1]:  # Check if source tableau pile is not empty
+                    source_card = self.tableau[source - 1][-1]  # Get the card being moved
+                    if self.tableau[target - 1]:  # Check if target tableau pile is not empty
+                        target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
+                        if source_card.color != target_card.color:  # Check if colors alternate
+                            if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
+                                return True
+                            else:
+                                print("Error: Card rank is not one less than target card rank")
+                                return False
+                        else:
+                            print("Error: Card color does not alternate")
+                            return False
+                    else:  # If target tableau pile is empty, check if source card is one less than the last card in the pile
+                        if source_card.rank == 13:  # King can be placed on an empty pile
+                            return True
+                        else:
+                            print("Error: Only king can be placed on an empty tableau pile")
+                            return False
+                else:
+                    print("Error: Source tableau pile is empty")
+                    return False
+            else:  # If moving from pile to tableau
+                if self.tableau[target - 1]:  # Check if target tableau pile is not empty
+                    target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
+                    if self.piles[source]:  # Check if source pile is not empty
+                        source_card = self.piles[source][-1]  # Get the card being moved
+                        if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
+                            return True
+                        else:
+                            print("Error: Card rank is not one less than target card rank")
+                            return False
+                    else:
+                        print("Error: Source pile is empty")
+                        return False
+                else:
+                    print("Error: Target tableau pile is empty")
+                    return False
     
     def move(self, source, target):
         # 0 = hand
@@ -137,9 +187,13 @@ class Solitaire:
         for code in self.card_codes:
             rank = int(code) // 4 + 1
             suit = int(code) % 4
+            if suit ==  0 or suit == 3:
+                color = "black"
+            else:
+                color = "red"
             suit = self.mapping[suit]
             visible = False  # All cards are initially visible
-            card_obj = self.Card(rank, suit, visible)
+            card_obj = self.Card(rank, suit, color, visible)
 
             # Add cards to tableau rows with increasing counts
             if index <= 6 and count <= 6:
@@ -191,6 +245,9 @@ class Solitaire:
         print([str(card) for card in self.piles[11]])
        
         print()
+        
+        
+    def displayBoard(self):
         print("Hacker's Tableau:")
         for pile in self.tableau:
             print([card.visible_str() for card in pile])
@@ -210,14 +267,13 @@ class Solitaire:
         print("\nHacker's Pile of Spades:")
         print([card.visible_str() for card in self.piles[11]])
 
-        
-    def displayBoard(self):
-        print("Hacker's Tableau:")
-        for pile in self.tableau:
-            print([card.visible_str() for card in pile])
-
 # Example usage
 solitaire = Solitaire()
-solitaire.play()
-solitaire.move(7,8)
-solitaire.play()
+solitaire.displayBoard()
+if solitaire.check_validity(7,8):
+    solitaire.move(7,8)
+    solitaire.displayBoard()
+if solitaire.check_validity(3,8):
+    solitaire.move(3,8)
+    solitaire.displayBoard()
+
