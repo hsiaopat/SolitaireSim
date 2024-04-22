@@ -9,13 +9,14 @@ class Solitaire:
             self.visible = visible
 
         def __str__(self):
-            if self.visible:
-                return f"{self.rank} of {self.suit}"
-            else:
-                return "Hidden Card"
+            #if self.visible:
+            return f"{self.rank} of {self.suit}"
+            #else:
+            #    return "Hidden Card"
+
         def visible_str(self):
                 return f"{self.rank} of {self.suit}"
-        
+
         def flip(self):
             self.visible = not self.visible
 
@@ -24,27 +25,31 @@ class Solitaire:
         files_in_directory = os.listdir()
 
         # Look for a file with the desired format (containing numbers from 01 to 51)
-        for file_name in files_in_directory:
+        for file_name in files_in_directory[3:5]:
             if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
                 self.card_codes = self.generate_card_codes(file_name)
                 print("File Name: ")
                 print(file_name)
-                break  
+                break
         else:
             raise FileNotFoundError("No suitable file found in the current directory.")
 
 
         self.card_codes = self.generate_card_codes(file_name)
         self.mapping = {
-            0:"C", 1: "D", 2: "H", 3: "S" 
+            0:"C", 1: "D", 2: "H", 3: "S"
+        }
+
+        self.suit_to_number = {
+            "C": 0, "D": 1, "H": 2, "S": 3
         }
 
 
         self.tableau = [[] for _ in range(7)]
         self.setup_tableau()
-        self.pointer = len(self.hand)-1
-    
-        
+        self.pointer = len(self.hand) - 3
+
+
 
     def generate_card_codes(self, file_name):
         card_codes = []
@@ -57,27 +62,36 @@ class Solitaire:
             else:
                 i -= 1  # Move one character back if it's not a valid two-digit number
         return card_codes
-    
+
     def check_validity(self, source, target):
         # Check if the move is valid based on the tableau
         if source == target:
             print("Error: You selected the same location")
             return False
-        
+
         if source < 0 or source > 11 or target < 0 or target > 11:
             print("Error: Not valid location to move")
             return False
-        
+
         # If the target is one of the piles
         if target >= 8 and target <= 11:
             target_suit = self.mapping[target - 8]  # Get the suit of the target pile
             if source <= 7:  # If moving from tableau to pile
                 if self.tableau[source - 1]:  # Check if tableau source pile is not empty
                     card_suit = self.tableau[source - 1][-1].suit  # Get the suit of the card being moved
-                    if card_suit == target_suit:  # Check if suits match
+                    if card_suit != target_suit:  # Check if suits match
+                        print("Error: Card suit does not match pile suit")
+                        return False
+                    card_rank = self.tableau[source - 1][-1].rank
+                    if self.piles[target]:
+                        prev_rank = self.piles[target][-1].rank
+                    else:
+                        prev_rank = 0
+
+                    if card_rank == prev_rank + 1:
                         return True
                     else:
-                        print("Error: Card suit does not match pile suit")
+                        print("Error: Card is not next in pile")
                         return False
                 else:
                     print("Error: Source tableau pile is empty")
@@ -113,10 +127,14 @@ class Solitaire:
                     target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
                     if self.piles[source]:  # Check if source pile is not empty
                         source_card = self.piles[source][-1]  # Get the card being moved
-                        if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
-                            return True
+                        if source_card.color != target_card.color:  # Check if colors alternate
+                            if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
+                                return True
+                            else:
+                                print("Error: Card rank is not one less than target card rank")
+                                return False
                         else:
-                            print("Error: Card rank is not one less than target card rank")
+                            print("Error: Card color does not alternate")
                             return False
                     else:
                         print("Error: Source pile is empty")
@@ -124,22 +142,23 @@ class Solitaire:
                 else:
                     print("Error: Target tableau pile is empty")
                     return False
-    
+
     def move(self, source, target):
         # 0 = hand
-        # 1 = col 1 
+        # 1 = col 1
         # 2 = col 2
-        # 3 = col 3 
-        # 4 = col 4 
-        # 5 = col 5 
-        # 6 = col 6 
-        # 7 = col 7 
+        # 3 = col 3
+        # 4 = col 4
+        # 5 = col 5
+        # 6 = col 6
+        # 7 = col 7
         # 8 = clubs pile
         # 9 = diamonds pile
         # 10 = hearts pile
         # 11 = spades pile
         #check for error
-        
+
+
 
         # Move card to desired location
         if source == 0:  # If the source is the hand
@@ -151,7 +170,7 @@ class Solitaire:
                     self.hand[self.pointer - 1].flip()
             # If it was in the hand, move the pointer
             self.pointer -= 1
-            
+
             # Update the hand if necessary
             if self.pointer < 0:
                 self.pointer = 0
@@ -167,7 +186,8 @@ class Solitaire:
             card = self.tableau[source-1].pop()
             self.tableau[target-1].append(card)
 
-    
+
+
     def hitHand(self):
         self.pointer -= 3
         if self.pointer == 0:
@@ -196,7 +216,7 @@ class Solitaire:
             card_obj = self.Card(rank, suit, color, visible)
 
             # Add cards to tableau rows with increasing counts
-            if index <= 6 and count <= 6:
+            if index <= 6 and count <= 7:
                 self.tableau[index].append(card_obj)
                 index += 1
 
@@ -206,18 +226,20 @@ class Solitaire:
 
             else:
                 hand.append(card_obj)
-        
+
+            #Solitaire.displayBoard(self)
+
         for i in range(len(self.tableau)):
             self.tableau[i][-1].visible = True
-            
+
         hand[-1].visible = True
 
         self.hand = hand
         self.piles = piles
-        self.piles[8] = pileC 
-        self.piles[9] = pileD 
+        self.piles[8] = pileC
+        self.piles[9] = pileD
         self.piles[10] = pileH
-        self.piles[11] = pileS 
+        self.piles[11] = pileS
 
     def play(self):
         print("Welcome to Solitaire!")
@@ -243,10 +265,10 @@ class Solitaire:
 
         print("\nPile of Spades:")
         print([str(card) for card in self.piles[11]])
-       
+
         print()
-        
-        
+
+
     def displayBoard(self):
         print("Hacker's Tableau:")
         for pile in self.tableau:
@@ -268,12 +290,12 @@ class Solitaire:
         print([card.visible_str() for card in self.piles[11]])
 
 # Example usage
-solitaire = Solitaire()
-solitaire.displayBoard()
-if solitaire.check_validity(7,8):
-    solitaire.move(7,8)
+if __name__ == "__main__":
+    solitaire = Solitaire()
     solitaire.displayBoard()
-if solitaire.check_validity(3,8):
-    solitaire.move(3,8)
-    solitaire.displayBoard()
-
+    if solitaire.check_validity(7,8):
+        solitaire.move(7,8)
+        solitaire.displayBoard()
+    if solitaire.check_validity(3,8):
+        solitaire.move(3,8)
+        solitaire.displayBoard()
