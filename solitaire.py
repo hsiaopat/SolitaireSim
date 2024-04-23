@@ -158,7 +158,7 @@ class Solitaire:
         # 11 = spades pile
         #check for error
 
-
+        #check if source is in tableau then move pointer
 
         # Move card to desired location
         if source == 0:  # If the source is the hand
@@ -177,8 +177,9 @@ class Solitaire:
 
         # Else, flip card behind it over
         elif source <= 11 and source >= 8:
-            card = self.piles[source].pop()
-            self.tableau[target-1].append(card)
+            cards = self.piles[source][self.visibleCardPointers:]
+            self.tableau[target-1].extend(cards)
+            self.visibleCardPointers-=1
         elif target <= 11 and target >= 8:
             card = self.tableau[source-1].pop()
             self.piles[target].append(card)
@@ -204,6 +205,9 @@ class Solitaire:
         piles = {}
         index = 0
         count = 1
+        visibleCardPointers = []
+
+        #set up pointers for tableaus
         for code in self.card_codes:
             rank = int(code) // 4 + 1
             suit = int(code) % 4
@@ -218,6 +222,7 @@ class Solitaire:
             # Add cards to tableau rows with increasing counts
             if index <= 6 and count <= 7:
                 self.tableau[index].append(card_obj)
+                visibleCardPointers[index] = len(self.tableau[index] - 1)
                 index += 1
 
                 if index == 7:
@@ -240,6 +245,7 @@ class Solitaire:
         self.piles[9] = pileD
         self.piles[10] = pileH
         self.piles[11] = pileS
+        self.visibleCardPointers = visibleCardPointers
 
     def play(self):
         print("Welcome to Solitaire!")
