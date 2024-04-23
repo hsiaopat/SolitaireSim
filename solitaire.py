@@ -63,14 +63,14 @@ class Solitaire:
                 i -= 1  # Move one character back if it's not a valid two-digit number
         return card_codes
 
-    def check_validity(self, source, target):
+    def check_validity(self, source, target, verbose=False):
         # Check if the move is valid based on the tableau
         if source == target:
-            print("Error: You selected the same location")
+            if verbose: print("Error: You selected the same location")
             return False
 
         if source < 0 or source > 11 or target < 0 or target > 11:
-            print("Error: Not valid location to move")
+            if verbose: print("Error: Not valid location to move")
             return False
 
         # If the target is one of the piles
@@ -80,7 +80,7 @@ class Solitaire:
                 if self.tableau[source - 1]:  # Check if tableau source pile is not empty
                     card_suit = self.tableau[source - 1][-1].suit  # Get the suit of the card being moved
                     if card_suit != target_suit:  # Check if suits match
-                        print("Error: Card suit does not match pile suit")
+                        if verbose: print("Error: Card suit does not match pile suit")
                         return False
                     card_rank = self.tableau[source - 1][-1].rank
                     if self.piles[target]:
@@ -91,10 +91,10 @@ class Solitaire:
                     if card_rank == prev_rank + 1:
                         return True
                     else:
-                        print("Error: Card is not next in pile")
+                        if verbose: print("Error: Card is not next in pile")
                         return False
                 else:
-                    print("Error: Source tableau pile is empty")
+                    if verbose: print("Error: Source tableau pile is empty")
                     return False
             else:  # If moving from one pile to another pile
                 return True  # Pile to pile move is always valid
@@ -108,19 +108,19 @@ class Solitaire:
                             if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
                                 return True
                             else:
-                                print("Error: Card rank is not one less than target card rank")
+                                if verbose: print("Error: Card rank is not one less than target card rank")
                                 return False
                         else:
-                            print("Error: Card color does not alternate")
+                            if verbose: print("Error: Card color does not alternate")
                             return False
                     else:  # If target tableau pile is empty, check if source card is one less than the last card in the pile
                         if source_card.rank == 13:  # King can be placed on an empty pile
                             return True
                         else:
-                            print("Error: Only king can be placed on an empty tableau pile")
+                            if verbose: print("Error: Only king can be placed on an empty tableau pile")
                             return False
                 else:
-                    print("Error: Source tableau pile is empty")
+                    if verbose: print("Error: Source tableau pile is empty")
                     return False
             else:  # If moving from pile to tableau
                 if self.tableau[target - 1]:  # Check if target tableau pile is not empty
@@ -131,16 +131,16 @@ class Solitaire:
                             if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
                                 return True
                             else:
-                                print("Error: Card rank is not one less than target card rank")
+                                if verbose: print("Error: Card rank is not one less than target card rank")
                                 return False
                         else:
-                            print("Error: Card color does not alternate")
+                            if verbose: print("Error: Card color does not alternate")
                             return False
                     else:
-                        print("Error: Source pile is empty")
+                        if verbose: print("Error: Source pile is empty")
                         return False
                 else:
-                    print("Error: Target tableau pile is empty")
+                    if verbose: print("Error: Target tableau pile is empty")
                     return False
 
     def move(self, source, target):
