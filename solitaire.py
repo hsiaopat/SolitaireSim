@@ -101,7 +101,8 @@ class Solitaire:
         else:  # If moving to the tableau
             if source <= 7:  # If moving from tableau to tableau
                 if self.tableau[source - 1]:  # Check if source tableau pile is not empty
-                    source_card = self.tableau[source - 1][-1]  # Get the card being moved
+                    source_card = self.tableau[source - 1][self.visibleCardPointers[source - 1]]  # Get the card being moved
+                    print(source_card)
                     if self.tableau[target - 1]:  # Check if target tableau pile is not empty
                         target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
                         if source_card.color != target_card.color:  # Check if colors alternate
@@ -160,6 +161,10 @@ class Solitaire:
 
         #check if source is in tableau then move pointer
 
+        if not self.check_validity(source, target):
+            print(f"Move from {source} to {target} is not possible")
+            return
+
         # Move card to desired location
         if source == 0:  # If the source is the hand
             card = self.hand.pop(self.pointer)
@@ -181,11 +186,13 @@ class Solitaire:
             self.tableau[target-1].extend(cards)
             self.visibleCardPointers-=1
         elif target <= 11 and target >= 8:
-            card = self.tableau[source-1].pop()
+            card = self.tableau[source-1].pop(self.visibleCardPointers[source - 1])
             self.piles[target].append(card)
         else:
-            card = self.tableau[source-1].pop()
-            self.tableau[target-1].append(card)
+            cards = self.tableau[source - 1][self.visibleCardPointers[source - 1]:]
+            print(cards)
+            self.tableau[source - 1] = self.tableau[source - 1][:self.visibleCardPointers[source - 1]]
+            self.tableau[target - 1].append(cards)
 
 
 
@@ -205,7 +212,8 @@ class Solitaire:
         piles = {}
         index = 0
         count = 1
-        visibleCardPointers = []
+        visibleCardPointers = [i for i in range(7)]
+        print(visibleCardPointers)
 
         #set up pointers for tableaus
         for code in self.card_codes:
@@ -222,7 +230,6 @@ class Solitaire:
             # Add cards to tableau rows with increasing counts
             if index <= 6 and count <= 7:
                 self.tableau[index].append(card_obj)
-                visibleCardPointers[index] = len(self.tableau[index] - 1)
                 index += 1
 
                 if index == 7:
@@ -231,6 +238,7 @@ class Solitaire:
 
             else:
                 hand.append(card_obj)
+
 
             #Solitaire.displayBoard(self)
 
@@ -299,9 +307,10 @@ class Solitaire:
 if __name__ == "__main__":
     solitaire = Solitaire()
     solitaire.displayBoard()
-    if solitaire.check_validity(7,8):
-        solitaire.move(7,8)
-        solitaire.displayBoard()
-    if solitaire.check_validity(3,8):
-        solitaire.move(3,8)
-        solitaire.displayBoard()
+    solitaire.move(7, 8)
+    solitaire.displayBoard()
+
+    solitaire.move(3, 2)
+    solitaire.move(1, 9)
+    solitaire.move(2, 1)
+    solitaire.displayBoard()
