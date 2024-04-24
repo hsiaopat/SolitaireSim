@@ -65,6 +65,9 @@ class Solitaire:
 
     def check_validity(self, source, target, verbose=False):
         # Check if the move is valid based on the tableau
+        print("visible Card pointers")
+        print(self.visibleCardPointers)
+
         if source == target:
             if verbose: print("Error: You selected the same location")
             return False
@@ -72,6 +75,11 @@ class Solitaire:
         if source < 0 or source > 11 or target < 0 or target > 11:
             if verbose: print("Error: Not valid location to move")
             return False
+        
+        if target <= 8 and target > 0:
+            if len(self.tableau[source-1]) == 0:
+                if verbose: print("Error: No cards in pile")
+                return False
 
         # If the target is one of the piles
         if target >= 8 and target <= 11:
@@ -181,18 +189,18 @@ class Solitaire:
                 self.pointer = 0
 
         # Else, flip card behind it over
-        elif source <= 11 and source >= 8:
+        elif source <= 11 and source >= 8: #source is in the piles
             cards = self.piles[source][self.visibleCardPointers:]
             self.tableau[target-1].extend(cards)
             self.visibleCardPointers-=1
-        elif target <= 11 and target >= 8:
-            card = self.tableau[source-1].pop(self.visibleCardPointers[source - 1])
+        elif target <= 11 and target >= 8: #tableau to target
+            card = self.tableau[source-1].pop()
             self.piles[target].append(card)
-        else:
+        else: #tableau to tableau
             cards = self.tableau[source - 1][self.visibleCardPointers[source - 1]:]
             print(cards)
             self.tableau[source - 1] = self.tableau[source - 1][:self.visibleCardPointers[source - 1]]
-            self.tableau[target - 1].append(cards)
+            self.tableau[target - 1].extend(cards)
 
 
 
@@ -307,10 +315,19 @@ class Solitaire:
 if __name__ == "__main__":
     solitaire = Solitaire()
     solitaire.displayBoard()
+
+    print("7,8")
     solitaire.move(7, 8)
     solitaire.displayBoard()
 
+    print("3,2")
     solitaire.move(3, 2)
+    solitaire.displayBoard()
+
+    print("1,9")
     solitaire.move(1, 9)
+    solitaire.displayBoard()
+
+    print("2,1")
     solitaire.move(2, 1)
     solitaire.displayBoard()
