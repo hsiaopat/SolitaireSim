@@ -22,20 +22,25 @@ class Solitaire:
 
     def __init__(self):
          # Get a list of files in the current directory
-        files_in_directory = os.listdir()
+        files_in_directory = os.listdir("gameFiles")
 
+        possible_files = []
         # Look for a file with the desired format (containing numbers from 01 to 51)
-        for file_name in files_in_directory[3:5]:
+        for file_name in files_in_directory:
             if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
-                self.card_codes = self.generate_card_codes(file_name)
-                print("File Name: ")
-                print(file_name)
-                break
+                possible_files.append(file_name)
+
+        if len(possible_files) > 0:
+            print(f"Possible files: {possible_files}")
+            file_num = int(input("Enter which number game you would like out of these (0 indexed): "))
+            self.card_codes = self.generate_card_codes(possible_files[file_num])
+            #self.card_codes = self.generate_card_codes("00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051")
+            print("File Name: ")
+            print(possible_files[file_num])
         else:
             raise FileNotFoundError("No suitable file found in the current directory.")
 
 
-        self.card_codes = self.generate_card_codes(file_name)
         self.mapping = {
             0:"C", 1: "D", 2: "H", 3: "S"
         }
@@ -47,7 +52,7 @@ class Solitaire:
 
         self.tableau = [[] for _ in range(7)]
         self.setup_tableau()
-        self.pointer = len(self.hand) - 3
+        self.pointer = len(self.hand)
 
 
 
@@ -65,8 +70,8 @@ class Solitaire:
 
     def check_validity(self, source, target, verbose=False):
         # Check if the move is valid based on the tableau
-        print("visible Card pointers")
-        print(self.visibleCardPointers)
+        #print("visible Card pointers")
+        #print(self.visibleCardPointers)
 
         if source == target:
             if verbose: print("Error: You selected the same location")
@@ -75,42 +80,53 @@ class Solitaire:
         if source < 0 or source > 11 or target < 0 or target > 11:
             if verbose: print("Error: Not valid location to move")
             return False
-        
+
         if target <= 8 and target > 0:
-            if len(self.tableau[source-1]) == 0:
+            if len(self.tableau[source - 1]) == 0:
                 if verbose: print("Error: No cards in pile")
                 return False
 
         # If the target is one of the piles
         if target >= 8 and target <= 11:
             target_suit = self.mapping[target - 8]  # Get the suit of the target pile
-            if source <= 7:  # If moving from tableau to pile
-                if self.tableau[source - 1]:  # Check if tableau source pile is not empty
-                    card_suit = self.tableau[source - 1][-1].suit  # Get the suit of the card being moved
-                    if card_suit != target_suit:  # Check if suits match
-                        if verbose: print("Error: Card suit does not match pile suit")
-                        return False
-                    card_rank = self.tableau[source - 1][-1].rank
-                    if self.piles[target]:
-                        prev_rank = self.piles[target][-1].rank
+            if source <= 7:  # If moving from tableau or hand to pile
+                if source != 0: # Moving from tableau
+                    if self.tableau[source - 1]:  # Check if tableau source pile is not empty
+                        card_suit = self.tableau[source - 1][-1].suit  # Get the suit of the card being moved
+                        card_rank = self.tableau[source - 1][-1].rank
                     else:
-                        prev_rank = 0
+                        if verbose: print("Error: Source tableau pile is empty")
+                        return False
+                else: # Moving from hand
+                    if (self.pointer >= len(self.hand)):
+                        if verbose: print("Error: Need to draw cards")
+                        return False
+                    elif self.hand:
+                        card_suit = self.hand[self.pointer].suit
+                        card_rank = self.hand[self.pointer].rank
+                    else:
+                        if verbose: print("Error: Source pile is empty")
+                        return False
 
-                    if card_rank == prev_rank + 1:
-                        return True
-                    else:
-                        if verbose: print("Error: Card is not next in pile")
-                        return False
+                if card_suit != target_suit:  # Check if suits match
+                    if verbose: print("Error: Card suit does not match pile suit")
+                    return False
+                if self.piles[target]:
+                    prev_rank = self.piles[target][-1].rank
                 else:
-                    if verbose: print("Error: Source tableau pile is empty")
+                    prev_rank = 0
+
+                if card_rank == prev_rank + 1:
+                    return True
+                else:
+                    if verbose: print("Error: Card is not next in pile")
                     return False
             else:  # If moving from one pile to another pile
                 return True  # Pile to pile move is always valid
         else:  # If moving to the tableau
-            if source <= 7:  # If moving from tableau to tableau
+            if source > 0:  # If moving from tableau to tableau
                 if self.tableau[source - 1]:  # Check if source tableau pile is not empty
                     source_card = self.tableau[source - 1][self.visibleCardPointers[source - 1]]  # Get the card being moved
-                    print(source_card)
                     if self.tableau[target - 1]:  # Check if target tableau pile is not empty
                         target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
                         if source_card.color != target_card.color:  # Check if colors alternate
@@ -124,18 +140,25 @@ class Solitaire:
                             return False
                     else:  # If target tableau pile is empty, check if source card is one less than the last card in the pile
                         if source_card.rank == 13:  # King can be placed on an empty pile
-                            return True
+                            if self.visibleCardPointers[source - 1] != 0:
+                                return True
+                            else: # Pointless move of king
+                                if verbose: print("Error: Moving king from open spot to open spot does nothing")
+                                return False
                         else:
                             if verbose: print("Error: Only king can be placed on an empty tableau pile")
                             return False
                 else:
                     if verbose: print("Error: Source tableau pile is empty")
                     return False
-            else:  # If moving from pile to tableau
+            else:  # If moving from hand to tableau
                 if self.tableau[target - 1]:  # Check if target tableau pile is not empty
                     target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
-                    if self.piles[source]:  # Check if source pile is not empty
-                        source_card = self.piles[source][-1]  # Get the card being moved
+                    if (self.pointer >= len(self.hand)):
+                        if verbose: print("Error: Need to draw cards")
+                        return False
+                    elif self.hand:  # Check if source pile is not empty
+                        source_card = self.hand[self.pointer]  # Get the card being moved
                         if source_card.color != target_card.color:  # Check if colors alternate
                             if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
                                 return True
@@ -169,7 +192,7 @@ class Solitaire:
 
         #check if source is in tableau then move pointer
 
-        if not self.check_validity(source, target):
+        if not self.check_validity(source, target, verbose=True):
             print(f"Move from {source} to {target} is not possible")
             return
 
@@ -182,7 +205,9 @@ class Solitaire:
                 if self.pointer > 0:
                     self.hand[self.pointer - 1].flip()
             # If it was in the hand, move the pointer
-            self.pointer -= 1
+            #self.pointer -= 1
+            else:
+                self.piles[target].append(card)
 
             # Update the hand if necessary
             if self.pointer < 0:
@@ -192,24 +217,29 @@ class Solitaire:
         elif source <= 11 and source >= 8: #source is in the piles
             cards = self.piles[source][self.visibleCardPointers:]
             self.tableau[target-1].extend(cards)
-            self.visibleCardPointers-=1
-        elif target <= 11 and target >= 8: #tableau to target
+            self.visibleCardPointers[target - 1] -= 1
+        elif target <= 11 and target >= 8: #tableau to pile
             card = self.tableau[source-1].pop()
             self.piles[target].append(card)
+            self.visibleCardPointers[source - 1] -= 1
         else: #tableau to tableau
             cards = self.tableau[source - 1][self.visibleCardPointers[source - 1]:]
-            print(cards)
             self.tableau[source - 1] = self.tableau[source - 1][:self.visibleCardPointers[source - 1]]
             self.tableau[target - 1].extend(cards)
+            self.visibleCardPointers[source - 1] -= 1
+            if (self.visibleCardPointers[target - 1] == -1):
+                self.visibleCardPointers[target - 1] = 0
 
 
 
     def hitHand(self):
-        self.pointer -= 3
         if self.pointer == 0:
             self.pointer = len(self.hand) - 3
-        elif self.pointer < 0:
+        elif self.pointer <= 3:
             self.pointer = 0
+        else:
+            self.pointer -= 3
+
 
     def setup_tableau(self):
         hand = []
@@ -298,36 +328,77 @@ class Solitaire:
 
         print("\nHacker's Pile:")
         print([card.visible_str() for card in self.hand])
+        print(f"Current available card: #{self.pointer}, or {len(self.hand) - self.pointer} from right")
 
-        print("\nHacker's Pile of Clubs:")
-        print([card.visible_str() for card in self.piles[8]])
+        print("\nHacker's Pile of Clubs: ", end="")
+        print([card.visible_str() for card in self.piles[8]], end="")
 
-        print("\nHacker's Pile of Diamonds:")
-        print([card.visible_str() for card in self.piles[9]])
+        print("\nHacker's Pile of Diamonds: ", end="")
+        print([card.visible_str() for card in self.piles[9]], end="")
 
-        print("\nHacker's Pile of Hearts:")
-        print([card.visible_str() for card in self.piles[10]])
+        print("\nHacker's Pile of Hearts: ", end="")
+        print([card.visible_str() for card in self.piles[10]], end="")
 
-        print("\nHacker's Pile of Spades:")
-        print([card.visible_str() for card in self.piles[11]])
+        print("\nHacker's Pile of Spades: ", end="")
+        print([card.visible_str() for card in self.piles[11]], end="\n\n")
+        #print("------------------------------------------------------\n")
+
+
+    def playGame(self):
+        # self.move(1, 9)
+        # self.move(2, 1)
+        # self.move(3, 1)
+        # self.move(7, 8)
+        # self.move(4, 8)
+        # self.move(5, 8)
+        # self.move(0, 3)
+        # self.hitHand()
+        # self.move(0, 10)
+        # self.hitHand()
+        # self.hitHand()
+        # self.move(0, 9)
+        # self.hitHand()
+        # self.hitHand()
+        # self.hitHand()
+        # self.hitHand()
+        self.displayBoard()
+        game_over = False
+
+        while not game_over:
+            source, target = [int(i) for i in (input("Enter a source and target pile, '0 0' to draw from the deck, or '-1 -1' to quit: ")).split()]
+            if target == 0:
+                self.hitHand()
+            elif target == -1:
+                break
+            else:
+                self.move(source, target)
+
+            self.displayBoard()
 
 # Example usage
 if __name__ == "__main__":
     solitaire = Solitaire()
-    solitaire.displayBoard()
+    #solitaire.displayBoard()
 
+    solitaire.playGame()
+
+    '''
     print("7,8")
     solitaire.move(7, 8)
-    solitaire.displayBoard()
+    #solitaire.displayBoard()
 
     print("3,2")
     solitaire.move(3, 2)
-    solitaire.displayBoard()
+    #solitaire.displayBoard()
 
     print("1,9")
     solitaire.move(1, 9)
-    solitaire.displayBoard()
+    #solitaire.displayBoard()
 
     print("2,1")
     solitaire.move(2, 1)
+    #solitaire.displayBoard()
+
+    solitaire.move(4, 8)
     solitaire.displayBoard()
+    '''
