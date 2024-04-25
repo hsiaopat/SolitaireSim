@@ -1,4 +1,5 @@
 import os
+import random
 
 class Solitaire:
     class Card:
@@ -15,30 +16,61 @@ class Solitaire:
             #    return "Hidden Card"
 
         def visible_str(self):
-                return f"{self.rank} of {self.suit}"
+            return f"{self.rank} of {self.suit}"
 
         def flip(self):
             self.visible = not self.visible
 
-    def __init__(self):
-         # Get a list of files in the current directory
+    def __init__(self, most_recent=False, random_game=False, draw_num=3):
+        self.draw_num = draw_num
+
+        # Get a list of files in the current directory
         files_in_directory = os.listdir("gameFiles")
 
-        possible_files = []
-        # Look for a file with the desired format (containing numbers from 01 to 51)
-        for file_name in files_in_directory:
-            if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
-                possible_files.append(file_name)
+        # Use this option to play the most recent file
+        if most_recent:
+            for file_name in files_in_directory:
+                if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
+                    self.card_codes = self.generate_card_codes(file_name)
+                    print(f"File Name: {file_name}")
+                    break
+            else:
+                raise FileNotFoundError("No suitable file found in the current directory.")
 
-        if len(possible_files) > 0:
-            print(f"Possible files: {possible_files}")
-            file_num = int(input("Enter which number game you would like out of these (0 indexed): "))
-            self.card_codes = self.generate_card_codes(possible_files[file_num])
+        # Gives you choice of files in the directory
+        elif not random_game:
+            possible_files = []
+            # Look for a file with the desired format (containing numbers from 01 to 51)
+            for file_name in files_in_directory:
+                if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
+                    possible_files.append(file_name)
+
+            if len(possible_files) > 0:
+                print(f"Possible files: {possible_files}")
+                file_num = int(input("Enter which number game you would like out of these (0 indexed): "))
+                self.card_codes = self.generate_card_codes(possible_files[file_num])
+                print(f"File Name: {possible_files[file_num]}")
+            else:
+                raise FileNotFoundError("No suitable file found in the current directory.")
+
+
+            # Unshuffled (easily solvable) example
             #self.card_codes = self.generate_card_codes("00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051")
-            print("File Name: ")
-            print(possible_files[file_num])
+
+            # Solvable game example
+            #self.card_codes = self.generate_card_codes("31501835474539091638200206085123244837321327142911280146440025172243124249363041051019070334261540332104")
+
+            # Quick dead end example
+            #self.card_codes = self.generate_card_codes("20480530061643441801243336142207452710460911023100353223045140493442150312211917472637381339290825415028")
+
+        # Games are randomized
         else:
-            raise FileNotFoundError("No suitable file found in the current directory.")
+            order = [i for i in range(52)]
+            random.shuffle(order)
+            game_name = "".join([f"{card:02d}" for card in order])
+            print(f"Game name: {game_name}")
+            self.card_codes = self.generate_card_codes(game_name)
+
 
 
         self.mapping = {
@@ -101,7 +133,7 @@ class Solitaire:
                     if (self.pointer >= len(self.hand)):
                         if verbose: print("Error: Need to draw cards")
                         return False
-                    elif self.hand:
+                    elif self.hand and self.pointer >= 0:
                         card_suit = self.hand[self.pointer].suit
                         card_rank = self.hand[self.pointer].rank
                     else:
@@ -126,7 +158,11 @@ class Solitaire:
         else:  # If moving to the tableau
             if source > 0:  # If moving from tableau to tableau
                 if self.tableau[source - 1]:  # Check if source tableau pile is not empty
-                    source_card = self.tableau[source - 1][self.visibleCardPointers[source - 1]]  # Get the card being moved
+                    try:
+                        source_card = self.tableau[source - 1][self.visibleCardPointers[source - 1]]  # Get the card being moved
+                    except:
+                        self.displayBoard()
+                        print(source, self.visibleCardPointers)
                     if self.tableau[target - 1]:  # Check if target tableau pile is not empty
                         target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
                         if source_card.color != target_card.color:  # Check if colors alternate
@@ -152,13 +188,13 @@ class Solitaire:
                     if verbose: print("Error: Source tableau pile is empty")
                     return False
             else:  # If moving from hand to tableau
-                if self.tableau[target - 1]:  # Check if target tableau pile is not empty
-                    target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
-                    if (self.pointer >= len(self.hand)):
-                        if verbose: print("Error: Need to draw cards")
-                        return False
-                    elif self.hand:  # Check if source pile is not empty
-                        source_card = self.hand[self.pointer]  # Get the card being moved
+                if (self.pointer >= len(self.hand)):
+                    if verbose: print("Error: Need to draw cards")
+                    return False
+                elif self.hand and self.pointer >= 0:  # Check if source pile is not empty
+                    source_card = self.hand[self.pointer]  # Get the card being moved
+                    if self.tableau[target - 1]:  # Check if target tableau pile is not empty
+                        target_card = self.tableau[target - 1][-1]  # Get the top card of the target pile
                         if source_card.color != target_card.color:  # Check if colors alternate
                             if source_card.rank == target_card.rank - 1:  # Check if ranks are consecutive
                                 return True
@@ -169,10 +205,13 @@ class Solitaire:
                             if verbose: print("Error: Card color does not alternate")
                             return False
                     else:
-                        if verbose: print("Error: Source pile is empty")
-                        return False
+                        if source_card.rank == 13:
+                            return True
+                        elif verbose:
+                            print("Error: Only king can be placed on an empty tableau pile")
+                            return False
                 else:
-                    if verbose: print("Error: Target tableau pile is empty")
+                    if verbose: print("Error: Source pile is empty")
                     return False
 
     def move(self, source, target):
@@ -192,8 +231,8 @@ class Solitaire:
 
         #check if source is in tableau then move pointer
 
-        if not self.check_validity(source, target, verbose=True):
-            print(f"Move from {source} to {target} is not possible")
+        if not self.check_validity(source, target, verbose=False):
+            #print(f"Move from {source} to {target} is not possible")
             return
 
         # Move card to desired location
@@ -204,6 +243,9 @@ class Solitaire:
                 # Flip the card behind it if any
                 if self.pointer > 0:
                     self.hand[self.pointer - 1].flip()
+
+                if self.visibleCardPointers[target - 1] < 0:
+                    self.visibleCardPointers[target - 1] = 0
             # If it was in the hand, move the pointer
             #self.pointer -= 1
             else:
@@ -221,24 +263,28 @@ class Solitaire:
         elif target <= 11 and target >= 8: #tableau to pile
             card = self.tableau[source-1].pop()
             self.piles[target].append(card)
-            self.visibleCardPointers[source - 1] -= 1
+            if self.visibleCardPointers[source - 1] >= len(self.tableau[source - 1]):
+                self.visibleCardPointers[source - 1] -= 1
         else: #tableau to tableau
             cards = self.tableau[source - 1][self.visibleCardPointers[source - 1]:]
             self.tableau[source - 1] = self.tableau[source - 1][:self.visibleCardPointers[source - 1]]
             self.tableau[target - 1].extend(cards)
             self.visibleCardPointers[source - 1] -= 1
-            if (self.visibleCardPointers[target - 1] == -1):
+            if (self.visibleCardPointers[target - 1] < 0):
                 self.visibleCardPointers[target - 1] = 0
 
 
 
     def hitHand(self):
         if self.pointer == 0:
-            self.pointer = len(self.hand) - 3
-        elif self.pointer <= 3:
+            self.pointer = len(self.hand) - self.draw_num
+        elif self.pointer <= self.draw_num:
             self.pointer = 0
         else:
-            self.pointer -= 3
+            self.pointer -= self.draw_num
+
+        if self.pointer < 0:
+            self.pointer = 0
 
 
     def setup_tableau(self):
@@ -251,7 +297,6 @@ class Solitaire:
         index = 0
         count = 1
         visibleCardPointers = [i for i in range(7)]
-        print(visibleCardPointers)
 
         #set up pointers for tableaus
         for code in self.card_codes:
@@ -325,6 +370,7 @@ class Solitaire:
         print("Hacker's Tableau:")
         for pile in self.tableau:
             print([card.visible_str() for card in pile])
+        print(f"Visible Card Pointers: {self.visibleCardPointers}")
 
         print("\nHacker's Pile:")
         print([card.visible_str() for card in self.hand])
@@ -342,6 +388,22 @@ class Solitaire:
         print("\nHacker's Pile of Spades: ", end="")
         print([card.visible_str() for card in self.piles[11]], end="\n\n")
         #print("------------------------------------------------------\n")
+
+
+    def board_to_string(self):
+        board_string = ""
+
+        for card in self.hand:
+            board_string += f"{(card.rank - 1) * 4 + self.suit_to_number[card.suit]:02d}"
+
+        for pile in self.tableau:
+            board_string += "|"
+            for card in pile:
+                board_string += f"{(card.rank - 1) * 4 + self.suit_to_number[card.suit]:02d}"
+
+        board_string += f"|{self.pointer}"
+
+        return board_string
 
 
     def playGame(self):
@@ -377,7 +439,8 @@ class Solitaire:
 
 # Example usage
 if __name__ == "__main__":
-    solitaire = Solitaire()
+    solitaire = Solitaire(random_game=True, draw_num=1)
+    print(solitaire.board_to_string())
     #solitaire.displayBoard()
 
     solitaire.playGame()
