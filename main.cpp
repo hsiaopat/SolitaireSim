@@ -123,6 +123,10 @@ int main(int argc, char* argv[], char* environment[])
     //create two structures to hold our Main Window handle
     //and the Button's handle
     
+    if (argc == 2) {
+        deal_new_game();
+        return 0;
+    }
 
     //this window's caption is "File Download", so we search for it's handle using the FindWindow API		
     solitaire_handle = FindWindow(NULL, "Solitaire");
