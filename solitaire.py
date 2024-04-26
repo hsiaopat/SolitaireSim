@@ -1,5 +1,6 @@
 import os
 import random
+import glob
 
 class Solitaire:
     class Card:
@@ -25,17 +26,14 @@ class Solitaire:
         self.draw_num = draw_num
 
         # Get a list of files in the current directory
-        files_in_directory = os.listdir("gameFiles")
+        files_in_directory = os.listdir(".")
 
         # Use this option to play the most recent file
         if most_recent:
-            for file_name in files_in_directory:
-                if len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]):
-                    self.card_codes = self.generate_card_codes(file_name)
-                    print(f"File Name: {file_name}")
-                    break
-            else:
-                raise FileNotFoundError("No suitable file found in the current directory.")
+            possible_files = [file_name for file_name in files_in_directory if (len(file_name) == 104 and all(char.isdigit() for char in file_name[:-4]))]
+            file_name = max(possible_files, key=os.path.getmtime)
+            self.card_codes = self.generate_card_codes(file_name)
+            print(f"File Name: {file_name}")
 
         # Gives you choice of files in the directory
         elif not random_game:
@@ -276,8 +274,10 @@ class Solitaire:
 
 
     def hitHand(self):
+        is_reshuffle = False
         if self.pointer == 0:
             self.pointer = len(self.hand) - self.draw_num
+            is_reshuffle = True
         elif self.pointer <= self.draw_num:
             self.pointer = 0
         else:
@@ -285,6 +285,7 @@ class Solitaire:
 
         if self.pointer < 0:
             self.pointer = 0
+        return is_reshuffle
 
 
     def setup_tableau(self):
@@ -328,7 +329,8 @@ class Solitaire:
         for i in range(len(self.tableau)):
             self.tableau[i][-1].visible = True
 
-        hand[-1].visible = True
+        hand = hand[::-1]
+        hand[-1].visible = False
 
         self.hand = hand
         self.piles = piles

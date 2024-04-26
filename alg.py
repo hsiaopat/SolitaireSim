@@ -59,7 +59,10 @@ def simulate_game(board, steps=[], numbered_steps=[], moves_made=0, consecutive_
             if board_string not in used_boards:
                 used_boards.add(board_string)
                 new_steps = steps + [f"Place {rank} of {suit} from pile {i} to finished"]
-                new_numbered_steps = numbered_steps + [f"{i} {suit_pile + 8}"]
+                if i != 0:
+                    new_numbered_steps = numbered_steps + [f"{i} {suit_pile + 8} {board.visibleCardPointers[i - 1]}"]
+                else:
+                     new_numbered_steps = numbered_steps + [f"{i} {suit_pile + 8} {-1}"]
                 if verbose: print(f"Place {rank} of {suit} from pile {i} to finished")
                 if verbose: print(len(new_board.hand), [len(new_board.tableau[j]) for j in range(7)], total_moves_tried)
                 if len(new_board.hand) + sum([len(new_board.tableau[j]) for j in range(7)]) == 0:
@@ -87,7 +90,7 @@ def simulate_game(board, steps=[], numbered_steps=[], moves_made=0, consecutive_
                 if board_string not in used_boards:
                     used_boards.add(board_string)
                     new_steps = steps + [f"Move top card {board.tableau[source - 1][board.visibleCardPointers[source - 1]]} and lower from stack {source} to {target}"]
-                    new_numbered_steps = numbered_steps + [f"{source} {target}"]
+                    new_numbered_steps = numbered_steps + [f"{source} {target} {board.visibleCardPointers[source - 1]}"]
                     if verbose: print(f"Move top card {board.tableau[source - 1][board.visibleCardPointers[source - 1]]} and lower from stack {source} to {target}")
                     consecutive_draws = 0
                     total_moves_tried += 1
@@ -107,7 +110,7 @@ def simulate_game(board, steps=[], numbered_steps=[], moves_made=0, consecutive_
             if board_string not in used_boards:
                 used_boards.add(board_string)
                 new_steps = steps + [f"Place draw card {board.hand[board.pointer]} on tableau pile {target}"]
-                new_numbered_steps = numbered_steps + [f"0 {target}"]
+                new_numbered_steps = numbered_steps + [f"0 {target} -1"]
                 if verbose: print(f"Place draw card {board.hand[board.pointer]} on tableau pile {target}")
                 consecutive_draws = 0
                 total_moves_tried += 1
@@ -119,12 +122,14 @@ def simulate_game(board, steps=[], numbered_steps=[], moves_made=0, consecutive_
     # Draw from pile as long as we haven't done it too many times in a row
     if consecutive_draws < len(board.hand) / board.draw_num:
         new_board = deepcopy(board)
-        new_board.hitHand()
+        reshuffle = new_board.hitHand()
         board_string = new_board.board_to_string()
         if board_string not in used_boards:
             used_boards.add(board_string)
             new_steps = steps + ["Draw from pile"]
-            new_numbered_steps = numbered_steps + [f"-1 -1"]
+            new_numbered_steps = numbered_steps + [f"-1 -1 -1"]
+            if reshuffle:
+                new_numbered_steps = new_numbered_steps + [f"-1 -1 -1"]                
             if verbose: print("Draw from pile")
             consecutive_draws = consecutive_draws + 1
             total_moves_tried += 1
@@ -163,7 +168,7 @@ def test_multiple(num_games):
     #board.displayBoard()
 
 def solve_board(output):
-    board = solitaire.Solitaire(most_recent=True, random_game=False, draw_num=3)
+    board = solitaire.Solitaire(most_recent=True, random_game=False, draw_num=1)
     board.displayBoard()
     if not simulate_game(board, verbose=False, output=output):
         with open(output, "w") as f:
@@ -172,7 +177,7 @@ def solve_board(output):
 
 def main():
     #test_multiple(20)
-    solve_board("gameFiles/output.txt")
+    solve_board("output.txt")
 
 
 if __name__ == "__main__":
