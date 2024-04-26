@@ -111,9 +111,13 @@ void deal_new_game() {
     Sleep(movement_time);
 
     SetCursorPos(rect.left + 25, rect.top + 40);
+    Sleep(movement_time);
     left_click();
+    Sleep(movement_time);
     SetCursorPos(rect.left + 25, rect.top + 60);
+    Sleep(movement_time);
     left_click();
+    Sleep(movement_time);
     
 }
 
@@ -123,10 +127,7 @@ int main(int argc, char* argv[], char* environment[])
     //create two structures to hold our Main Window handle
     //and the Button's handle
     
-    if (argc == 2) {
-        deal_new_game();
-        return 0;
-    }
+    
 
     //this window's caption is "File Download", so we search for it's handle using the FindWindow API		
     solitaire_handle = FindWindow(NULL, "Solitaire");
@@ -139,6 +140,11 @@ int main(int argc, char* argv[], char* environment[])
     SetForegroundWindow(solitaire_handle);
     SetActiveWindow(solitaire_handle);
     SetFocus(solitaire_handle);
+
+    if (argc == 2) {
+        deal_new_game();
+        return 0;
+    }
 
     //test_centering();
     //deal_new_game(); 

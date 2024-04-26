@@ -12,7 +12,7 @@ def solve_game():
 def deal_new():
     output = subprocess.run(["main.exe", "deal"], capture_output=True)
 
-subprocess.run(["cracked_solitaire.exe"], capture_output=True)
+subprocess.Popen(["cracked_solitaire.exe"])
 r = tk.Tk()
 r.title('Solitaire Solver')
 button = tk.Button(r, text='Solve Solitaire', width=100, command=solve_game)
