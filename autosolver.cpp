@@ -122,14 +122,7 @@ void deal_new_game() {
 }
 
 int main(int argc, char* argv[], char* environment[])
-{
-
-    //create two structures to hold our Main Window handle
-    //and the Button's handle
-    
-    
-
-    //this window's caption is "File Download", so we search for it's handle using the FindWindow API		
+{	
     solitaire_handle = FindWindow(NULL, "Solitaire");
 
     if (solitaire_handle == NULL) {
@@ -145,10 +138,6 @@ int main(int argc, char* argv[], char* environment[])
         deal_new_game();
         return 0;
     }
-
-    //test_centering();
-    //deal_new_game(); 
-    //test_centering();   
 
     std::ifstream input_file("output.txt");
     std::string line;
