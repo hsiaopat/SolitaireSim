@@ -1,6 +1,7 @@
 import tkinter as tk
 import subprocess
 from tkinter.messagebox import showinfo
+from tkinter import ttk
 
 def solve_game():
     output = subprocess.run(["c-solver.exe"], capture_output=True)
@@ -15,9 +16,15 @@ def deal_new():
 subprocess.Popen(["cracked_solitaire.exe"])
 r = tk.Tk()
 r.title('Solitaire Solver')
-button = tk.Button(r, text='Solve Solitaire', width=100, command=solve_game)
-button2 = tk.Button(r, text='Deal New Game', width=100, command=deal_new)
-button.pack()
-button2.pack()
+
+style = ttk.Style()
+
+# Configure the style for the buttons
+style.configure('TButton', foreground='black', bg='white', font=('Helvetica', 12))
+
+button = ttk.Button(r, text='Solve Solitaire', width=65, command=solve_game)
+button2 = ttk.Button(r, text='Deal New Game', width=65, command=deal_new)
+button.pack(pady=25)
+button2.pack(pady=10)
 
 r.mainloop()

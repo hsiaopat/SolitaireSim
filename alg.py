@@ -174,6 +174,7 @@ def solve_board(output):
         with open(output, "w") as f:
             # Write how many moves were tried with the algorithm if it isn't solved
             f.write(f"{total_moves_tried}\n")
+            print("Nothing found")
 
 def main():
     #test_multiple(20)
