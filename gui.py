@@ -11,7 +11,7 @@ def solve_game():
         output = subprocess.run(["autosolver.exe"], capture_output=True)
 
 def deal_new():
-    output = subprocess.run(["main.exe", "deal"], capture_output=True)
+    output = subprocess.run(["autosolver.exe", "deal"], capture_output=True)
 
 subprocess.Popen(["cracked_solitaire.exe"])
 r = tk.Tk()
