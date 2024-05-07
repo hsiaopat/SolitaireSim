@@ -4,11 +4,11 @@ from tkinter.messagebox import showinfo
 from tkinter import ttk
 
 def solve_game():
-    output = subprocess.run(["c-solver.exe"], capture_output=True)
+    output = subprocess.run(["python",  "alg.py"], capture_output=True)
     if output.stdout.decode("utf-8") == "Nothing found\r\n":
         showinfo("Info", "This game of solitaire is unwinnable")
     else:
-        output = subprocess.run(["main.exe"], capture_output=True)
+        output = subprocess.run(["autosolver.exe"], capture_output=True)
 
 def deal_new():
     output = subprocess.run(["main.exe", "deal"], capture_output=True)
